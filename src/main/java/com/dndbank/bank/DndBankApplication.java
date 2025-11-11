@@ -1,5 +1,6 @@
 package com.dndbank.bank;
 
+import com.dndbank.bank.config.DatabaseConnectionChecker;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -7,6 +8,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class DndBankApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(DndBankApplication.class, args);
+        SpringApplication app = new SpringApplication(DndBankApplication.class);
+        app.addListeners(new DatabaseConnectionChecker());
+        app.run(args);
     }
 }

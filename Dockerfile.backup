@@ -1,0 +1,9 @@
+FROM postgres:16-alpine
+
+RUN apk add --no-cache bash
+
+WORKDIR /app
+COPY scripts/backup-entrypoint.sh /app/backup-entrypoint.sh
+RUN chmod +x /app/backup-entrypoint.sh
+
+ENTRYPOINT ["/app/backup-entrypoint.sh"]

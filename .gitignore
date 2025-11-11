@@ -1,6 +1,6 @@
-/target/
+/build/
+/.gradle/
 /.idea/
-/.mvn/
 *.iml
 .DS_Store
 /backups/*.sql

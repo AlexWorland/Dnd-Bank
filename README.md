@@ -17,7 +17,7 @@ The default DM credentials come from `APP_DEFAULT_DM_*` environment variables (s
 
 ## Development Scripts
 
-- `mvn spring-boot:run`
+- `./gradlew bootRun`
 - Configure datasource via `SPRING_DATASOURCE_*` env vars (see `src/main/resources/application.yml`).
 
 ## Key Features

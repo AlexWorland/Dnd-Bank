@@ -1,48 +1,72 @@
-version: '3.9'
+version: '3.8'
+
 services:
   app:
-    build: .
-    container_name: dnd-bank-app
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/dndbank
-      SPRING_DATASOURCE_USERNAME: dnd_master
-      SPRING_DATASOURCE_PASSWORD: dnd_master
-      APP_DEFAULT_DM_USERNAME: dm
-      APP_DEFAULT_DM_PASSWORD: ChangeMe123!
-      APP_DEFAULT_DM_DISPLAY_NAME: Dungeon Master
+    build:
+      context: .
+      dockerfile: Dockerfile
+      platforms:
+        - "linux/amd64"
+        - "linux/arm64"
     ports:
       - "8080:8080"
     depends_on:
-      db:
-        condition: service_healthy
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/dndbank
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-dnd_master}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-dnd_master}
+      SERVER_PORT: 8080
+      APP_DEFAULT_DM_USERNAME: ${APP_DEFAULT_DM_USERNAME:-dm}
+      APP_DEFAULT_DM_PASSWORD: ${APP_DEFAULT_DM_PASSWORD:-ChangeMe123!}
+      APP_DEFAULT_DM_DISPLAY_NAME: ${APP_DEFAULT_DM_DISPLAY_NAME:-Dungeon Master}
+      APP_DEFAULT_INSTITUTION_NAME: ${APP_DEFAULT_INSTITUTION_NAME:-Gilded Griffon Bank}
+    networks:
+      - dnd-network
+    volumes:
+      - ./backups:/project-backups
+
   db:
-    image: postgres:16
-    container_name: dnd-bank-db
+    image: postgres:16-alpine
     environment:
       POSTGRES_DB: dndbank
-      POSTGRES_USER: dnd_master
-      POSTGRES_PASSWORD: dnd_master
+      POSTGRES_USER: ${POSTGRES_USER:-dnd_master}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dnd_master}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - dnd-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dnd_master"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dnd_master} -d dndbank"]
       interval: 10s
       timeout: 5s
       retries: 5
-  db-backup:
-    image: postgres:16
-    container_name: dnd-bank-backup
+
+  backup:
+    build:
+      context: .
+      dockerfile: Dockerfile.backup
+      platforms:
+        - "linux/amd64"
+        - "linux/arm64"
     depends_on:
       - db
     environment:
+      POSTGRES_USER: ${POSTGRES_USER:-dnd_master}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dnd_master}
       POSTGRES_DB: dndbank
-      POSTGRES_USER: dnd_master
-      POSTGRES_PASSWORD: dnd_master
-      BACKUP_INTERVAL_SECONDS: 1800
       BACKUP_DIR: /project-backups
-    entrypoint: ["bash", "/scripts/backup-entrypoint.sh"]
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-1800}
     volumes:
       - ./backups:/project-backups
-      - ./scripts:/scripts:ro
+      - ./scripts/backup-entrypoint.sh:/app/backup-entrypoint.sh:ro
+    networks:
+      - dnd-network
+    entrypoint: /app/backup-entrypoint.sh
+
 volumes:
   pgdata:
+
+networks:
+  dnd-network:
+    driver: bridge

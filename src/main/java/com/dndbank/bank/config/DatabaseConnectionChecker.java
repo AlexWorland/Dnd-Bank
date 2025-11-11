@@ -13,6 +13,9 @@ import java.sql.SQLException;
 public class DatabaseConnectionChecker implements ApplicationListener<ApplicationEnvironmentPreparedEvent> {
 
     private static final Logger logger = LoggerFactory.getLogger(DatabaseConnectionChecker.class);
+    private static final int MAX_RETRIES = 30;
+    private static final int RETRY_DELAY_MS = 2000;
+    private static final int INITIAL_DELAY_MS = 1000;
 
     @Override
     public void onApplicationEvent(ApplicationEnvironmentPreparedEvent event) {
@@ -23,20 +26,42 @@ public class DatabaseConnectionChecker implements ApplicationListener<Applicatio
 
         logger.info("Checking PostgreSQL connection at: {}", url.replaceAll(":[^:@]+@", ":****@"));
         
-        try (Connection connection = DriverManager.getConnection(url, username, password)) {
-            boolean isValid = connection.isValid(5);
-            if (isValid) {
-                logger.info("PostgreSQL connection successful");
-            } else {
-                logger.error("PostgreSQL connection validation failed");
-                printExitMessage(url);
-                System.exit(1);
-            }
-        } catch (SQLException e) {
-            logger.error("Failed to connect to PostgreSQL: {}", e.getMessage());
-            printExitMessage(url);
+        // Initial delay to give database time to start
+        try {
+            Thread.sleep(INITIAL_DELAY_MS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.error("Interrupted during initial delay");
             System.exit(1);
         }
+        
+        for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            try (Connection connection = DriverManager.getConnection(url, username, password)) {
+                boolean isValid = connection.isValid(5);
+                if (isValid) {
+                    logger.info("PostgreSQL connection successful (attempt {}/{})", attempt, MAX_RETRIES);
+                    return;
+                } else {
+                    logger.warn("PostgreSQL connection validation failed (attempt {}/{})", attempt, MAX_RETRIES);
+                }
+            } catch (SQLException e) {
+                logger.warn("Failed to connect to PostgreSQL (attempt {}/{}): {}", attempt, MAX_RETRIES, e.getMessage());
+            }
+            
+            if (attempt < MAX_RETRIES) {
+                try {
+                    Thread.sleep(RETRY_DELAY_MS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    logger.error("Interrupted during retry delay");
+                    System.exit(1);
+                }
+            }
+        }
+        
+        logger.error("Failed to connect to PostgreSQL after {} attempts", MAX_RETRIES);
+        printExitMessage(url);
+        System.exit(1);
     }
 
     private void printExitMessage(String url) {

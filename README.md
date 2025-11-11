@@ -35,3 +35,4 @@ The default DM credentials come from `APP_DEFAULT_DM_*` environment variables (s
 - User-facing forms (player + DM) collect PP/GP/EP/SP/CP counts via `MoneyAmountForm`, and `CurrencyFormatter` renders friendly strings like `2 pp 4 gp 3 sp`.
 - When extending banking logic, always interact with the copper representation and convert at the edges only.
 # Dnd-Bank
+# Dnd-Bank

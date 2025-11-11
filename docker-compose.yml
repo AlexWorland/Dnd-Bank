@@ -1,0 +1,48 @@
+version: '3.9'
+services:
+  app:
+    build: .
+    container_name: dnd-bank-app
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/dndbank
+      SPRING_DATASOURCE_USERNAME: dnd_master
+      SPRING_DATASOURCE_PASSWORD: dnd_master
+      APP_DEFAULT_DM_USERNAME: dm
+      APP_DEFAULT_DM_PASSWORD: ChangeMe123!
+      APP_DEFAULT_DM_DISPLAY_NAME: Dungeon Master
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgres:16
+    container_name: dnd-bank-db
+    environment:
+      POSTGRES_DB: dndbank
+      POSTGRES_USER: dnd_master
+      POSTGRES_PASSWORD: dnd_master
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dnd_master"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  db-backup:
+    image: postgres:16
+    container_name: dnd-bank-backup
+    depends_on:
+      - db
+    environment:
+      POSTGRES_DB: dndbank
+      POSTGRES_USER: dnd_master
+      POSTGRES_PASSWORD: dnd_master
+      BACKUP_INTERVAL_SECONDS: 1800
+      BACKUP_DIR: /project-backups
+    entrypoint: ["bash", "/scripts/backup-entrypoint.sh"]
+    volumes:
+      - ./backups:/project-backups
+      - ./scripts:/scripts:ro
+volumes:
+  pgdata:

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" th:href="@{/css/styles.css}" href="/css/styles.css">
+    <title>DND Bank | Login</title>
+</head>
+<body>
+<section class="card narrow">
+    <h1>Welcome to the Adventurer's Bank</h1>
+    <p class="muted">Track every coin from pocket change to dragon hoards.</p>
+    <form method="post" th:action="@{/login}">
+        <label>Username
+            <input type="text" name="username" required autofocus>
+        </label>
+        <label>Password
+            <input type="password" name="password" required>
+        </label>
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+        <button type="submit" class="primary">Log in</button>
+    </form>
+    <p class="muted">Need an account? <a th:href="@{/register}">Join as a player</a>.</p>
+    <p th:if="${param.error}" class="error">Invalid credentials.</p>
+    <p th:if="${param.logout}" class="success">You have been logged out.</p>
+    <p th:if="${success}" class="success">Registration complete. Log in to continue.</p>
+</section>
+</body>
+</html>

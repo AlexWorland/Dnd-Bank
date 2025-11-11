@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" th:href="@{/css/styles.css}" href="/css/styles.css">
+    <title>Player Banking</title>
+</head>
+<body>
+<header class="nav">
+    <h1>Your Vault</h1>
+    <div>
+        <a class="button" th:href="@{/logout}">Logout</a>
+    </div>
+</header>
+<main class="grid">
+    <section class="card">
+        <h2>Accounts</h2>
+        <div th:if="${accounts.isEmpty()}">
+            <p>No accounts yet. Create one below.</p>
+        </div>
+        <article th:each="account : ${accounts}" class="account">
+            <h3 th:text="${account.type}"></h3>
+            <p>
+                <span class="label">Number</span>
+                <span th:text="${account.accountNumber}"></span>
+            </p>
+            <p>
+                <span class="label">Balance</span>
+                <span th:text="${currency.format(account.balanceCopper)}"></span>
+            </p>
+            <p>
+                <span class="label">Interest</span>
+                <span th:text="${account.interestRate}"></span>
+            </p>
+        </article>
+    </section>
+
+    <section class="card">
+        <h2>Open Account</h2>
+        <form method="post" th:action="@{/player/accounts}" th:object="${accountCreationForm}">
+            <label>Account Type
+                <select th:field="*{accountType}">
+                    <option th:each="type : ${T(com.dndbank.bank.enums.AccountType).values()}"
+                            th:value="${type}" th:text="${type}"></option>
+                </select>
+            </label>
+            <label>Banking Institution
+                <select th:field="*{institutionId}">
+                    <option th:each="institution : ${institutions}" th:value="${institution.id}"
+                            th:text="${institution.name}"></option>
+                </select>
+            </label>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button class="primary" type="submit">Create</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2>Deposit</h2>
+        <form method="post" th:action="@{/player/deposit}" th:object="${depositForm}">
+            <label>Account
+                <select th:field="*{accountId}">
+                    <option th:each="account : ${accounts}" th:value="${account.id}" th:text="${account.accountNumber}"></option>
+                </select>
+            </label>
+            <div class="currency-grid">
+                <label>Platinum
+                    <input type="number" min="0" th:field="*{amount.platinum}" placeholder="0">
+                </label>
+                <label>Gold
+                    <input type="number" min="0" th:field="*{amount.gold}" placeholder="0">
+                </label>
+                <label>Electrum
+                    <input type="number" min="0" th:field="*{amount.electrum}" placeholder="0">
+                </label>
+                <label>Silver
+                    <input type="number" min="0" th:field="*{amount.silver}" placeholder="0">
+                </label>
+                <label>Copper
+                    <input type="number" min="0" th:field="*{amount.copper}" placeholder="0">
+                </label>
+            </div>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button type="submit" class="primary">Deposit</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2>Withdraw</h2>
+        <form method="post" th:action="@{/player/withdraw}" th:object="${withdrawForm}">
+            <label>Account
+                <select th:field="*{accountId}">
+                    <option th:each="account : ${accounts}" th:value="${account.id}" th:text="${account.accountNumber}"></option>
+                </select>
+            </label>
+            <div class="currency-grid">
+                <label>Platinum
+                    <input type="number" min="0" th:field="*{amount.platinum}" placeholder="0">
+                </label>
+                <label>Gold
+                    <input type="number" min="0" th:field="*{amount.gold}" placeholder="0">
+                </label>
+                <label>Electrum
+                    <input type="number" min="0" th:field="*{amount.electrum}" placeholder="0">
+                </label>
+                <label>Silver
+                    <input type="number" min="0" th:field="*{amount.silver}" placeholder="0">
+                </label>
+                <label>Copper
+                    <input type="number" min="0" th:field="*{amount.copper}" placeholder="0">
+                </label>
+            </div>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button type="submit" class="secondary">Withdraw</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2>Recent Activity</h2>
+        <div th:if="${transactions.isEmpty()}">
+            <p>No activity yet.</p>
+        </div>
+        <ul class="timeline">
+            <li th:each="tx : ${transactions}">
+                <span th:text="${#temporals.format(tx.occurredAt, 'MMM dd HH:mm')}"></span>
+                <strong th:text="${tx.type}"></strong>
+                <em th:text="${currency.format(tx.amountCopper)}"></em>
+                <p th:text="${tx.description}"></p>
+            </li>
+        </ul>
+    </section>
+
+    <section class="card">
+        <h2>Send Coin (Zelle-style)</h2>
+        <form method="post" th:action="@{/player/transfer}" th:object="${transferForm}">
+            <label>From Account
+                <select th:field="*{fromAccountId}">
+                    <option th:each="account : ${accounts}" th:value="${account.id}" th:text="${account.accountNumber}"></option>
+                </select>
+            </label>
+            <label>To Account Number
+                <input type="text" th:field="*{targetAccountNumber}" placeholder="12-digit number">
+            </label>
+            <div class="currency-grid">
+                <label>Platinum
+                    <input type="number" min="0" th:field="*{amount.platinum}" placeholder="0">
+                </label>
+                <label>Gold
+                    <input type="number" min="0" th:field="*{amount.gold}" placeholder="0">
+                </label>
+                <label>Electrum
+                    <input type="number" min="0" th:field="*{amount.electrum}" placeholder="0">
+                </label>
+                <label>Silver
+                    <input type="number" min="0" th:field="*{amount.silver}" placeholder="0">
+                </label>
+                <label>Copper
+                    <input type="number" min="0" th:field="*{amount.copper}" placeholder="0">
+                </label>
+            </div>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button class="primary" type="submit">Send</button>
+        </form>
+    </section>
+</main>
+<section class="messages">
+    <p th:if="${message}" class="success" th:text="${message}"></p>
+    <p th:if="${error}" class="error" th:text="${error}"></p>
+</section>
+</body>
+</html>

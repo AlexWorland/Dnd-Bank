@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" th:href="@{/css/styles.css}" href="/css/styles.css">
+    <title>DM Control Room</title>
+</head>
+<body>
+<header class="nav">
+    <div>
+        <h1>DM Bank Console</h1>
+        <p class="muted">Total holdings <strong th:text="${currency.format(totalHoldingsCopper)}"></strong></p>
+    </div>
+    <a class="button" th:href="@{/logout}">Logout</a>
+</header>
+<main class="grid wide">
+    <section class="card">
+        <h2>Bank Accounts</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>Account</th>
+                <th>Owner</th>
+                <th>Institution</th>
+                <th>Balance</th>
+                <th>Interest</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="account : ${accounts}">
+                <td th:text="${account.accountNumber}"></td>
+                <td th:text="${account.owner.displayName}"></td>
+                <td th:text="${account.institution.name}"></td>
+                <td th:text="${currency.format(account.balanceCopper)}"></td>
+                <td th:text="${account.interestRate}"></td>
+                <td>
+                    <form method="post" th:action="@{'/dm/accounts/' + ${account.id} + '/interest'}">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="link">Apply Interest</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="card">
+        <h2>Adjust Account</h2>
+        <form method="post" th:action="@{/dm/accounts/adjust}" th:object="${accountAdjustmentForm}">
+            <label>Account
+                <select th:field="*{accountId}">
+                    <option th:each="account : ${accounts}" th:value="${account.id}" th:text="${account.accountNumber}"></option>
+                </select>
+            </label>
+            <div class="currency-grid">
+                <label>Platinum
+                    <input type="number" min="0" th:field="*{balance.platinum}" placeholder="0">
+                </label>
+                <label>Gold
+                    <input type="number" min="0" th:field="*{balance.gold}" placeholder="0">
+                </label>
+                <label>Electrum
+                    <input type="number" min="0" th:field="*{balance.electrum}" placeholder="0">
+                </label>
+                <label>Silver
+                    <input type="number" min="0" th:field="*{balance.silver}" placeholder="0">
+                </label>
+                <label>Copper
+                    <input type="number" min="0" th:field="*{balance.copper}" placeholder="0">
+                </label>
+            </div>
+            <label>Annual Interest
+                <input type="number" step="0.01" min="0" th:field="*{interestRate}">
+            </label>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button class="secondary" type="submit">Update</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2>Onboard Institution</h2>
+        <form method="post" th:action="@{/dm/institutions}" th:object="${institutionForm}">
+            <label>Name
+                <input type="text" th:field="*{name}" required>
+            </label>
+            <label>Description
+                <textarea th:field="*{description}" rows="2"></textarea>
+            </label>
+            <label>Base Interest
+                <input type="number" step="0.01" min="0" th:field="*{baseInterestRate}">
+            </label>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button class="primary" type="submit">Create</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2>Add NPC</h2>
+        <form method="post" th:action="@{/dm/npcs}" th:object="${npcForm}">
+            <label>Name
+                <input type="text" th:field="*{displayName}" required>
+            </label>
+            <label>Username
+                <input type="text" th:field="*{username}" required>
+            </label>
+            <label>Password
+                <input type="password" th:field="*{password}" required>
+            </label>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button class="primary" type="submit">Add NPC</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2>Instant Transfer</h2>
+        <form method="post" th:action="@{/dm/transfer}" th:object="${transferForm}">
+            <label>From Account
+                <select th:field="*{fromAccountId}">
+                    <option th:each="account : ${accounts}" th:value="${account.id}"
+                            th:text="${account.accountNumber + ' - ' + account.owner.displayName}"></option>
+                </select>
+            </label>
+            <label>To Account Number
+                <input type="text" th:field="*{targetAccountNumber}" placeholder="12-digit number">
+            </label>
+            <div class="currency-grid">
+                <label>Platinum
+                    <input type="number" min="0" th:field="*{amount.platinum}" placeholder="0">
+                </label>
+                <label>Gold
+                    <input type="number" min="0" th:field="*{amount.gold}" placeholder="0">
+                </label>
+                <label>Electrum
+                    <input type="number" min="0" th:field="*{amount.electrum}" placeholder="0">
+                </label>
+                <label>Silver
+                    <input type="number" min="0" th:field="*{amount.silver}" placeholder="0">
+                </label>
+                <label>Copper
+                    <input type="number" min="0" th:field="*{amount.copper}" placeholder="0">
+                </label>
+            </div>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button class="secondary" type="submit">Send</button>
+        </form>
+    </section>
+</main>
+<section class="messages">
+    <p th:if="${message}" class="success" th:text="${message}"></p>
+    <p th:if="${error}" class="error" th:text="${error}"></p>
+</section>
+</body>
+</html>
